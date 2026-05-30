@@ -177,7 +177,7 @@ metrics = bs_call_metrics(S, K, T, r, vol)
 
 # ---------- title ----------
 
-st.title("Equity Options Risk Monitor")
+st.title("Equity Options Risk Dashboard")
 st.caption("Single-position Black-Scholes monitor for a long call")
 
 
