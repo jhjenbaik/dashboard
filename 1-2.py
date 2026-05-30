@@ -378,7 +378,6 @@ def build_ai_commentary_prompt(ticker, S, K, T_days, r, vol, metrics):
     -Focus on overall positions characteristics, not individual Greek definitions.
     -Explain what the position is exposed to.
     -Mention the primary risk.
-    -Mention the primary risk.
     -Mention the market environment that benefits the position.
     -Mention the market environment that hurts the positions.
     -Use professional risk management language.
