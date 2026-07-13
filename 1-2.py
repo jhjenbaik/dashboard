@@ -76,15 +76,71 @@ def get_risk_free_rate():
     
     return r
 
-def get_volatility(ticker, window='1y'):
-    tk = yf.Ticker(ticker)
-    hist = tk.history(period=window)
-    close_series = hist['Close'].dropna()
-    returns = np.log(close_series / close_series.shift(1)).dropna()
-    vol = float(returns.std() * np.sqrt(252))
 
-    return vol
+@st.cache_data(ttl=3600, show_spinner=False)
+def get_volatility(ticker: str, window: str = "1y") -> float | None:
+    """
+    Download historical prices and calculate annualized volatility.
 
+    Returns:
+        Annualized volatility as a decimal, e.g. 0.25 = 25%.
+        None when market data cannot be retrieved.
+    """
+    ticker = ticker.strip().upper()
+
+    if not ticker:
+        return None
+
+    for attempt in range(3):
+        try:
+            hist = yf.download(
+                ticker,
+                period=window,
+                interval="1d",
+                auto_adjust=True,
+                progress=False,
+                threads=False,
+                timeout=15,
+            )
+
+            if hist is None or hist.empty:
+                raise ValueError(f"No historical data returned for {ticker}")
+
+            # yfinance may return either a normal or MultiIndex DataFrame
+            if isinstance(hist.columns, __import__("pandas").MultiIndex):
+                close_series = hist["Close"][ticker]
+            else:
+                close_series = hist["Close"]
+
+            close_series = close_series.dropna()
+
+            if len(close_series) < 2:
+                raise ValueError(
+                    f"Not enough price observations returned for {ticker}"
+                )
+
+            returns = np.log(
+                close_series / close_series.shift(1)
+            ).dropna()
+
+            volatility = float(returns.std() * np.sqrt(252))
+
+            if not np.isfinite(volatility):
+                raise ValueError("Calculated volatility is not finite")
+
+            return vol
+
+        except Exception as error:
+            # Retry only after a short delay
+            if attempt < 2:
+                time.sleep(2 ** attempt)
+            else:
+                print(
+                    f"Unable to retrieve volatility for {ticker}: "
+                    f"{type(error).__name__}: {error}"
+                )
+
+    return None
 
 # ------------------------------------------------
 # sidebar
